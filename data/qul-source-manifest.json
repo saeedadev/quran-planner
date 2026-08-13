@@ -1,0 +1,107 @@
+{
+  "library": {
+    "name": "QUL",
+    "url": "https://qul.tarteel.ai"
+  },
+  "layout": {
+    "resourceName": "KFGQPC V4 layout (1441H print)",
+    "resourceId": 19,
+    "resourceUrl": "https://qul.tarteel.ai/resources/mushaf-layout/19",
+    "info": {
+      "name": "QPC v4 tajweed",
+      "numberOfPages": 604,
+      "linesPerPage": 15,
+      "font": "v4-tajweed"
+    }
+  },
+  "decisions": {
+    "layoutFormat": {
+      "value": "sqlite",
+      "reason": "QUL download interface exposes only SQLite (and docx) for this layout; JSON export is not offered for it."
+    },
+    "scriptFormat": {
+      "value": "json",
+      "reason": "QUL offers JSON for the V4 glyphs word-by-word script."
+    },
+    "surahNamesSource": {
+      "value": "quran-metadata",
+      "reason": "Surah name texts are not present in the layout or script materials; Quran metadata (resource 70) is the documented supporting source per plan."
+    }
+  },
+  "materials": [
+    {
+      "role": "mushaf page/line layout",
+      "resourceName": "KFGQPC V4 layout (1441H print)",
+      "resourceId": 19,
+      "resourceUrl": "https://qul.tarteel.ai/resources/mushaf-layout/19",
+      "fileName": "qpc-v4-tajweed-15-lines.db",
+      "format": "sqlite",
+      "sizeBytes": 241664,
+      "sha256": "4b3fb1cbe8dff749ab0173c4b86cb40fe3c48dd072f41d3c7e715654a9f843cd",
+      "obtainedAt": "2026-08-13",
+      "tables": ["info", "pages"]
+    },
+    {
+      "role": "quran words (structural: word ids to surah:ayah)",
+      "resourceName": "V4 Glyphs (With Tajweed) - Word by word",
+      "resourceId": 47,
+      "resourceUrl": "https://qul.tarteel.ai/resources/quran-script/47",
+      "fileName": "qpc-v4.json",
+      "format": "json",
+      "sizeBytes": 7824904,
+      "sha256": "40964a1b7932e9a69e0dfc0d58dce3b73e30a803febda119fd6828bcb75fac98",
+      "obtainedAt": "2026-08-13",
+      "entries": 83668
+    },
+    {
+      "role": "surah names",
+      "resourceName": "Surah names",
+      "resourceId": 70,
+      "resourceUrl": "https://qul.tarteel.ai/resources/quran-metadata/70",
+      "fileName": "quran-metadata-surah-name.json",
+      "format": "json",
+      "sizeBytes": 20253,
+      "sha256": "ada09f674efd35d0c054c9b81c98d14550f6c66b77767a9173674799f675d7de",
+      "obtainedAt": "2026-08-13",
+      "entries": 114
+    }
+  ],
+  "verifiedStats": {
+    "pages": 604,
+    "lines": 9046,
+    "ayahLines": 8820,
+    "surahNameLines": 114,
+    "basmallahLines": 112,
+    "words": 83668,
+    "wordIdRange": "1..83668",
+    "surahNames": 114,
+    "sumOfVersesCount": 6236
+  },
+  "sampleCheck": {
+    "status": "confirmed",
+    "method": "Programmatic comparison of page samples against QUL's own public preview and known Madani Mushaf structure, then confirmed by the project owner.",
+    "samples": [
+      {
+        "page": 1,
+        "expectation": "Al-Fatihah complete: surah_name line then ayah lines covering 1:1..1:7",
+        "result": "8 lines; surah_name(1) + 7 ayah lines, words 1..36 -> 1:1..1:7; matches QUL preview HTML"
+      },
+      {
+        "page": 2,
+        "expectation": "Start of Al-Baqarah: surah_name(2), basmallah, ayahs from 2:1",
+        "result": "8 lines; surah_name(2) + basmallah + ayah lines words 37..77 -> 2:1..2:5"
+      },
+      {
+        "page": 302,
+        "expectation": "Mid-mushaf sample: continuous ayah flow",
+        "result": "15 justified ayah lines, words 40889..41035 -> 18:75..18:83"
+      },
+      {
+        "page": 604,
+        "expectation": "End of the mushaf: Al-Ikhlas, Al-Falaq, An-Nas; final words 114:6",
+        "result": "15 lines; surah_name(112).. surah_name(113).. surah_name(114) with basmallahs; last ayah line words 83665..83668 -> 114:6..114:6"
+      }
+    ],
+    "ownerReviewedAt": "2026-08-13"
+  }
+}
