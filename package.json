@@ -1,0 +1,32 @@
+{
+  "name": "tawasu",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "allowScripts": {
+    "esbuild": "postinstall"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:mushaf": "vitest run --config vitest.mushaf.config.ts",
+    "build:mushaf": "tsx tools/build-mushaf.ts",
+    "verify": "npm run build:mushaf && npm run test:mushaf && npm test"
+  },
+  "dependencies": {
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.0.5",
+    "tsx": "^4.23.12",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.1",
+    "vitest": "^4.1.10"
+  }
+}
