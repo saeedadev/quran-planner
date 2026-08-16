@@ -69,8 +69,8 @@ describe('memorization layer (scratch)', () => {
     expect(schedule.days[0].newMemorization).toEqual({ from: { surah: 114, ayah: 1 }, to: { surah: 114, ayah: 6 } });
     expect(schedule.days[0].pointerAfter).toEqual({ surah: 114, ayah: 6 });
     expect(schedule.days[0].completedSurahs).toEqual([114]);
-    expect(schedule.days[1].newMemorization).toEqual({ from: { surah: 113, ayah: 1 }, to: { surah: 113, ayah: 5 } });
-    expect(schedule.days[1].completedSurahs).toEqual([113, 114]);
+    expect(schedule.days[1].newMemorization).toEqual({ from: { surah: 113, ayah: 1 }, to: { surah: 113, ayah: 4 } });
+    expect(schedule.days[1].completedSurahs).toEqual([114]);
   });
 
   it('reverse ayahs rate walks forward within the surah without reversing ayahs', () => {
@@ -140,9 +140,18 @@ describe('memorization layer (scratch)', () => {
     const schedule = buildMemorizationSchedule(
       closedConfig({ startRef: { surah: 18, ayah: 1 }, weeklyPattern: new Array(7).fill('study') }),
     );
-    expect(schedule.days[0].newMemorization).toEqual({ from: { surah: 18, ayah: 1 }, to: { surah: 18, ayah: 8 } });
-    expect(schedule.days[1].newMemorization).toEqual({ from: { surah: 18, ayah: 9 }, to: { surah: 18, ayah: 15 } });
+    expect(schedule.days[0].newMemorization).toEqual({ from: { surah: 18, ayah: 1 }, to: { surah: 18, ayah: 9 } });
+    expect(schedule.days[1].newMemorization).toEqual({ from: { surah: 18, ayah: 10 }, to: { surah: 18, ayah: 15 } });
     expect(schedule.days[2].newMemorization).toEqual({ from: { surah: 18, ayah: 16 }, to: { surah: 18, ayah: 18 } });
+  });
+
+  it('forward half-page: a surah ending mid-page never leaks into the next surah', () => {
+    const schedule = buildMemorizationSchedule(
+      closedConfig({ startRef: { surah: 10, ayah: 107 }, weeklyPattern: new Array(7).fill('study') }),
+    );
+    expect(schedule.days[0].newMemorization).toEqual({ from: { surah: 10, ayah: 107 }, to: { surah: 10, ayah: 109 } });
+    expect(schedule.days[0].completedSurahs).toContain(10);
+    expect(schedule.days[1].newMemorization).toEqual({ from: { surah: 11, ayah: 1 }, to: { surah: 11, ayah: 5 } });
   });
 
   it('forward full-page: Al-Kahf first day covers the merged head page plus the next page', () => {
@@ -160,6 +169,6 @@ describe('memorization layer (scratch)', () => {
     expect(schedule.days[0].newMemorization).toEqual({ from: { surah: 19, ayah: 77 }, to: { surah: 19, ayah: 87 } });
     expect(schedule.days[1].newMemorization).toEqual({ from: { surah: 19, ayah: 88 }, to: { surah: 19, ayah: 98 } });
     expect(schedule.days[1].completedSurahs).toContain(19);
-    expect(schedule.days[2].newMemorization).toEqual({ from: { surah: 18, ayah: 1 }, to: { surah: 18, ayah: 8 } });
+    expect(schedule.days[2].newMemorization).toEqual({ from: { surah: 18, ayah: 1 }, to: { surah: 18, ayah: 9 } });
   });
 });

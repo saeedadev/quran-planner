@@ -121,6 +121,13 @@ function isBeforeOrEqual(a: AyahRef, b: AyahRef): boolean {
   return a.surah < b.surah || (a.surah === b.surah && a.ayah <= b.ayah);
 }
 
+// كبح وجه/صفحة كاملة إلى نهاية السورة الجارية: عند نهاية السورة في منتصف الصفحة
+// لا تُؤخذ آية من السورة التالية، بل يتوقف الوجه عند آخر آية في السورة.
+function clampToSurahEnd(ref: AyahRef, surah: number): AyahRef {
+  const boundary = surahEnd(surah);
+  return isBefore(boundary, ref) ? boundary : ref;
+}
+
 export function nextRef(ref: AyahRef): AyahRef | null {
   if (!refExists(ref)) {
     return null;
@@ -276,14 +283,52 @@ function refAfterSteps(ref: AyahRef, steps: number): AyahRef {
   return cursor;
 }
 
+// تقسيم الوجه نصفين يعتمد على المنتصف البصري للصفحة (الأسطر لا عدد الآيات):
+// النصف الأول = أول floor(N/2) من أسطر الآيات، والنصف الثاني = الباقي،
+// والخط الأوسط يُحتسب في النصف الثاني (مثل صفحة البقرة 6–16: النصف الأول 6–11 ثم 12–16).
 function firstFaceEndOfPage(page: number): AyahRef {
   const lines = ayahLinesOfPage(page);
-  return lines[Math.ceil(lines.length / 2) - 1].last;
+  const split = Math.floor(lines.length / 2);
+  if (split < 1) {
+    return lines[0].last;
+  }
+  return lines[split - 1].last;
 }
 
+// بداية النصف الثاني = ما بعد آخر آية في النصف الأول (وليس أول آية في السطر الأوسط):
+// السطر الأوسط قد يبدأ بآية تسبق نهاية النصف الأول (مثل صفحة المطففين التي يبدأ سطرها الأوسط بـ83:19–21).
 function secondFaceStartOfPage(page: number): AyahRef {
-  const lines = ayahLinesOfPage(page);
-  return lines[Math.ceil(lines.length / 2)].first;
+  const firstEnd = firstFaceEndOfPage(page);
+  return nextRef(firstEnd) ?? firstEnd;
+}
+
+function rangeAyahLines(first: AyahRef, last: AyahRef): readonly AyahLineEntry[] {
+  const out: AyahLineEntry[] = [];
+  const firstPage = pageOf(first);
+  const lastPage = pageOf(last);
+  const firstLine = lineIndexOf(first);
+  for (let page = firstPage; page <= lastPage; page += 1) {
+    const lines = ayahLinesOfPage(page);
+    for (const entry of lines) {
+      if (page === firstPage && entry.line < firstLine) {
+        continue;
+      }
+      if (isBefore(last, entry.first)) {
+        return out;
+      }
+      out.push(entry);
+    }
+  }
+  return out;
+}
+
+function visualMid(first: AyahRef, last: AyahRef): AyahRef {
+  const lines = rangeAyahLines(first, last);
+  const split = Math.floor(lines.length / 2);
+  if (split < 1) {
+    return last;
+  }
+  return lines[split - 1].last;
 }
 
 function assertRegionsDisjoint(regions: readonly FaceRegion[]): void {
@@ -306,7 +351,7 @@ function buildFaceRegions(): readonly FaceRegion[] {
   const regions: FaceRegion[] = [];
   const lastPageNum = index.pages[index.pages.length - 1].page;
   const push = (start: AyahRef, end: AyahRef): void => {
-    const mid = refAfterSteps(start, Math.ceil(countAyahs(start, end) / 2) - 1);
+    const mid = visualMid(start, end);
     regions.push({ start, mid, end });
   };
   for (let surah = 1; surah <= index.surahs.length; surah += 1) {
@@ -395,18 +440,21 @@ export function endOfFace(ref: AyahRef): AyahRef {
   }
   const region = regionFor(ref, faceRegions);
   if (region) {
-    return isBeforeOrEqual(ref, region.mid) ? region.mid : region.end;
+    const faceEnd = isBeforeOrEqual(ref, region.mid) ? region.mid : region.end;
+    return clampToSurahEnd(faceEnd, ref.surah);
   }
   const lines = ayahLinesOfPage(page);
-  const split = Math.ceil(lines.length / 2);
+  const split = Math.floor(lines.length / 2);
   const currentLine = lineIndexOf(ref);
   const currentPosition = lines.findIndex((entry) => entry.line === currentLine);
   if (currentPosition < 0) {
     fail('line-not-found', `ref ${formatAyahRef(ref)} line not found on page ${page}`);
   }
-  const inFirstFace = currentPosition < split;
+  // لا تتجاوز الآية نهاية سورتها الجارية: عند نهاية السورة في منتصف الصفحة
+  // (مثل صفحة يونس التي يلي آخر آياتها بداية سورة هود) يتوقف الوجه عند نهاية السورة.
+  const inFirstFace = split > 0 && currentPosition < split;
   const lastLine = inFirstFace ? lines[split - 1] : lines[lines.length - 1];
-  return lastLine.last;
+  return clampToSurahEnd(lastLine.last, ref.surah);
 }
 
 export function startOfFace(ref: AyahRef): AyahRef {
@@ -425,15 +473,19 @@ export function startOfFace(ref: AyahRef): AyahRef {
     return region.start;
   }
   const lines = ayahLinesOfPage(page);
-  const split = Math.ceil(lines.length / 2);
+  const split = Math.floor(lines.length / 2);
   const currentLine = lineIndexOf(ref);
   const currentPosition = lines.findIndex((entry) => entry.line === currentLine);
   if (currentPosition < 0) {
     fail('line-not-found', `ref ${formatAyahRef(ref)} line not found on page ${page}`);
   }
-  const inFirstFace = currentPosition < split;
-  const firstLine = inFirstFace ? lines[0] : lines[split];
-  return firstLine.first;
+  if (split < 1 || currentPosition < split) {
+    return lines[0].first;
+  }
+  // النصف الثاني يبدأ بعد نهاية النصف الأول مباشرة (وليس من أول السطر الأوسط)،
+  // حتى لا تُفقد آية تبدأ في السطر الأوسط ولا تُكرَّر أخرى تنتهي فيه.
+  const secondStart = nextRef(lines[split - 1].last);
+  return secondStart ?? lines[split - 1].last;
 }
 
 export function endOfPage(ref: AyahRef): AyahRef {
@@ -449,8 +501,7 @@ export function endOfPage(ref: AyahRef): AyahRef {
     return region.end;
   }
   const pageEnd = lastRefOfPage(page);
-  const surahBoundary = surahEnd(ref.surah);
-  return isBefore(pageEnd, surahBoundary) ? pageEnd : surahBoundary;
+  return clampToSurahEnd(pageEnd, ref.surah);
 }
 
 export function startOfPage(ref: AyahRef): AyahRef {

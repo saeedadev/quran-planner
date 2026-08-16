@@ -86,13 +86,30 @@ describe('mushaf layer (scratch)', () => {
   });
 
   it('endOfFace merges short surah starts/ends into the adjacent face', () => {
-    expect(endOfFace({ surah: 18, ayah: 1 })).toEqual({ surah: 18, ayah: 8 });
-    expect(endOfFace({ surah: 18, ayah: 9 })).toEqual({ surah: 18, ayah: 15 });
+    expect(endOfFace({ surah: 18, ayah: 1 })).toEqual({ surah: 18, ayah: 9 });
+    expect(endOfFace({ surah: 18, ayah: 9 })).toEqual({ surah: 18, ayah: 9 });
+    expect(endOfFace({ surah: 18, ayah: 10 })).toEqual({ surah: 18, ayah: 15 });
     expect(endOfFace({ surah: 18, ayah: 16 })).toEqual({ surah: 18, ayah: 18 });
     expect(endOfFace({ surah: 19, ayah: 77 })).toEqual({ surah: 19, ayah: 87 });
     expect(endOfFace({ surah: 19, ayah: 88 })).toEqual({ surah: 19, ayah: 98 });
-    expect(endOfFace({ surah: 20, ayah: 1 })).toEqual({ surah: 20, ayah: 6 });
-    expect(endOfFace({ surah: 113, ayah: 1 })).toEqual({ surah: 113, ayah: 5 });
+    expect(endOfFace({ surah: 20, ayah: 1 })).toEqual({ surah: 20, ayah: 4 });
+    expect(endOfFace({ surah: 113, ayah: 1 })).toEqual({ surah: 113, ayah: 4 });
+  });
+
+  it('endOfFace splits by the visual middle of the page, not by ayah count', () => {
+    expect(endOfFace({ surah: 2, ayah: 6 })).toEqual({ surah: 2, ayah: 11 });
+    expect(endOfFace({ surah: 2, ayah: 12 })).toEqual({ surah: 2, ayah: 16 });
+    expect(endOfFace({ surah: 2, ayah: 17 })).toEqual({ surah: 2, ayah: 20 });
+    expect(endOfFace({ surah: 2, ayah: 21 })).toEqual({ surah: 2, ayah: 24 });
+  });
+
+  it('endOfFace never crosses into the next surah when a surah ends mid-page', () => {
+    expect(endOfFace({ surah: 10, ayah: 107 })).toEqual({ surah: 10, ayah: 109 });
+    expect(endOfFace({ surah: 11, ayah: 1 })).toEqual({ surah: 11, ayah: 5 });
+    expect(endOfFace({ surah: 15, ayah: 91 })).toEqual({ surah: 15, ayah: 99 });
+    expect(endOfFace({ surah: 16, ayah: 1 })).toEqual({ surah: 16, ayah: 6 });
+    expect(endOfFace({ surah: 17, ayah: 105 })).toEqual({ surah: 17, ayah: 110 });
+    expect(endOfFace({ surah: 17, ayah: 111 })).toEqual({ surah: 17, ayah: 111 });
   });
 
   it('endOfPage merges short starts/ends into the adjacent page and clamps to the surah end', () => {
