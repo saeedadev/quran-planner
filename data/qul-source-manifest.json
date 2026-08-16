@@ -64,6 +64,18 @@
       "sha256": "ada09f674efd35d0c054c9b81c98d14550f6c66b77767a9173674799f675d7de",
       "obtainedAt": "2026-08-13",
       "entries": 114
+    },
+    {
+      "role": "juz boundaries (reference only: start, end, ayah count per juz)",
+      "resourceName": "Juz",
+      "resourceId": 68,
+      "resourceUrl": "https://qul.tarteel.ai/resources/quran-metadata/68",
+      "fileName": "quran-metadata-juz.json",
+      "format": "json",
+      "sizeBytes": 4933,
+      "sha256": "0e34f5abbd786c828d388b1f3c732db8b42b1bf36a4f619603e4c632f9e86628",
+      "obtainedAt": "2026-08-13",
+      "entries": 30
     }
   ],
   "verifiedStats": {
@@ -75,6 +87,7 @@
     "words": 83668,
     "wordIdRange": "1..83668",
     "surahNames": 114,
+    "juzes": 30,
     "sumOfVersesCount": 6236
   },
   "sampleCheck": {

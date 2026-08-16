@@ -12,15 +12,19 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:mushaf": "vitest run --config vitest.mushaf.config.ts",
+    "test:scratch": "vitest run --config vitest.scratch.config.ts",
     "build:mushaf": "tsx tools/build-mushaf.ts",
+    "pdf:trial": "tsx tools/pdf-trial.ts",
     "verify": "npm run build:mushaf && npm run test:mushaf && npm test"
   },
   "dependencies": {
+    "pdfmake": "^0.3.11",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },
   "devDependencies": {
     "@types/node": "^26.2.0",
+    "@types/pdfmake": "^0.3.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@types/sql.js": "^1.4.11",

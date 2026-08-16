@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import {
   INDEX_FORMAT,
   INDEX_VERSION,
+  JUZ_COUNT,
   MAX_SURAH,
   REFERENCE_AYAH_COUNT,
   REFERENCE_PAGE_COUNT,
@@ -23,6 +24,7 @@ function contentOf(result: BuildResult): Record<string, unknown> {
     source: result.index.source,
     pages: result.index.pages,
     surahs: result.index.surahs,
+    juzes: result.index.juzes,
   };
 }
 
@@ -140,6 +142,27 @@ describe('mushaf index built from real QUL materials', () => {
       expect(surah.number).toBe(position + 1);
       expect(surah.name.length).toBeGreaterThan(0);
     });
+  });
+
+  it('the 30 juz boundaries come from QUL and cover the whole mushaf', () => {
+    expect(index.juzes).toHaveLength(JUZ_COUNT);
+    index.juzes.forEach((juz, position) => {
+      expect(juz.juz).toBe(position + 1);
+      expect(juz.versesCount).toBeGreaterThan(0);
+      const firstPos = refs.findIndex((ref) => ref.surah === juz.first.surah && ref.ayah === juz.first.ayah);
+      const lastPos = refs.findIndex((ref) => ref.surah === juz.last.surah && ref.ayah === juz.last.ayah);
+      expect(firstPos).toBeGreaterThanOrEqual(0);
+      expect(lastPos).toBeGreaterThanOrEqual(firstPos);
+      if (position > 0) {
+        const prev = index.juzes[position - 1];
+        const prevLastPos = refs.findIndex((ref) => ref.surah === prev.last.surah && ref.ayah === prev.last.ayah);
+        expect(firstPos).toBe(prevLastPos + 1);
+      }
+    });
+    expect(index.juzes[0].first).toEqual({ surah: 1, ayah: 1 });
+    expect(index.juzes[JUZ_COUNT - 1].last).toEqual({ surah: 114, ayah: 6 });
+    const sum = index.juzes.reduce((total, juz) => total + juz.versesCount, 0);
+    expect(sum).toBe(REFERENCE_AYAH_COUNT);
   });
 
   it('the index contains no ayah text or glyph data, only the 114 surah names', () => {

@@ -11,7 +11,11 @@ export const LAYOUT_RESOURCE_ID = 19;
 export const SCRIPT_RESOURCE_ID = 47;
 export const LAYOUT_NAME = 'KFGQPC V4 (1441H print)';
 export const INDEX_FORMAT = 'tawasu-mushaf-index';
-export const INDEX_VERSION = 1;
+export const INDEX_VERSION = 2;
+export const JUZ_COUNT = 30;
+
+export const END_OF_QURAN_REF: AyahRef = { surah: 114, ayah: 6 };
+export const END_OF_FATIHAH_REF: AyahRef = { surah: 1, ayah: 7 };
 
 export type LineType = 'ayah' | 'surah_name' | 'basmallah';
 export type SurahNumber = number;
@@ -70,6 +74,13 @@ export interface MushafSurah {
   readonly name: string;
 }
 
+export interface MushafJuz {
+  readonly juz: number;
+  readonly first: AyahRef;
+  readonly last: AyahRef;
+  readonly versesCount: number;
+}
+
 export interface MushafIndexSource {
   readonly library: 'QUL';
   readonly layout: string;
@@ -85,4 +96,5 @@ export interface MushafIndex {
   readonly hash: string;
   readonly pages: readonly MushafPage[];
   readonly surahs: readonly MushafSurah[];
+  readonly juzes: readonly MushafJuz[];
 }

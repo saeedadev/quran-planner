@@ -1,4 +1,6 @@
 import {
+  END_OF_QURAN_REF,
+  JUZ_COUNT,
   MAX_AYAH,
   MAX_PAGE,
   MAX_SURAH,
@@ -207,6 +209,38 @@ export function validateAyahContinuity(refs: readonly AyahRef[]): void {
   }
 }
 
+export function validateIndexJuzes(index: MushafIndex): void {
+  if (index.juzes.length !== JUZ_COUNT) {
+    fail('juz-count', `expected ${JUZ_COUNT} juzes, got ${index.juzes.length}`);
+  }
+  index.juzes.forEach((juz, position) => {
+    if (juz.juz !== position + 1) {
+      fail('juz-number', `juzes must be numbered contiguously from 1, found juz ${juz.juz} at position ${position + 1}`);
+    }
+    const { first, last } = juz;
+    if (first.surah < MIN_SURAH || first.surah > MAX_SURAH || last.surah < MIN_SURAH || last.surah > MAX_SURAH) {
+      fail('juz-ref', `juz ${juz.juz} refers to an out-of-range surah`);
+    }
+    if (first.ayah < MIN_AYAH || last.ayah < MIN_AYAH) {
+      fail('juz-ref', `juz ${juz.juz} refers to an ayah below 1`);
+    }
+    if (last.surah < first.surah || (last.surah === first.surah && last.ayah < first.ayah)) {
+      fail('juz-range-order', `juz ${juz.juz} has last ${formatAyahRef(last)} before first ${formatAyahRef(first)}`);
+    }
+    if (!Number.isInteger(juz.versesCount) || juz.versesCount < 1) {
+      fail('juz-verses-count', `juz ${juz.juz} has an invalid verses_count ${juz.versesCount}`);
+    }
+  });
+  const first = index.juzes[0].first;
+  const last = index.juzes[index.juzes.length - 1].last;
+  if (first.surah !== 1 || first.ayah !== 1) {
+    fail('juz-first', `the first juz must start at 1:1, got ${formatAyahRef(first)}`);
+  }
+  if (last.surah !== END_OF_QURAN_REF.surah || last.ayah !== END_OF_QURAN_REF.ayah) {
+    fail('juz-last', `the last juz must end at 114:6, got ${formatAyahRef(last)}`);
+  }
+}
+
 export function validateIndexShape(index: MushafIndex): void {
   if (index.format !== INDEX_FORMAT) {
     fail('format', `index format is "${index.format}", expected "${INDEX_FORMAT}"`);
@@ -242,6 +276,7 @@ export function validateIndexShape(index: MushafIndex): void {
       fail('surah-name', `surah ${surah.number} has an empty name`);
     }
   });
+  validateIndexJuzes(index);
 }
 
 function validateIndexLine(page: PageNumber, line: MushafLine, position: number): void {

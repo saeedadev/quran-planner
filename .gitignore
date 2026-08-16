@@ -1,5 +1,7 @@
 node_modules/
 .AGENTS/node_modules/
 dist/
+scratch/
+dev/pdf-trial.pdf
 *.log
 .DS_Store

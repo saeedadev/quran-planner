@@ -1,9 +1,7 @@
-import react from "@vitejs/plugin-react";
 import { fileURLToPath, URL } from "node:url";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
-  plugins: [react()],
   resolve: {
     alias: {
       "@shared": fileURLToPath(new URL("./shared", import.meta.url)),
@@ -11,6 +9,7 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    exclude: ["tests/mushaf/**", "scratch/**", "**/node_modules/**", "**/dist/**", ".AGENTS/**"],
+    include: ["scratch/tests/**/*.test.ts"],
+    exclude: ["**/node_modules/**", "**/dist/**", ".AGENTS/**"],
   },
 });

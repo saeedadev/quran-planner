@@ -5,18 +5,22 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import initSqlJs from 'sql.js';
 
 import {
+  END_OF_QURAN_REF,
   INDEX_FORMAT,
   INDEX_VERSION,
+  JUZ_COUNT,
   LAYOUT_NAME,
   LAYOUT_RESOURCE_ID,
   MAX_PAGE,
   MAX_SURAH,
   MIN_SURAH,
+  REFERENCE_AYAH_COUNT,
   REFERENCE_PAGE_COUNT,
   REFERENCE_SURAH_COUNT,
   SCRIPT_RESOURCE_ID,
   type AyahRef,
   type MushafIndex,
+  type MushafJuz,
   type MushafLine,
   type MushafPage,
   type MushafSurah,
@@ -161,6 +165,91 @@ export function readSurahNames(): MushafSurah[] {
   return surahs;
 }
 
+function parseVerseKey(key: string): AyahRef {
+  const match = /^(\d+):(\d+)$/.exec(key);
+  if (!match) {
+    throw new QulDataError('juz-verse-key', `invalid verse key "${key}"`);
+  }
+  return { surah: Number(match[1]), ayah: Number(match[2]) };
+}
+
+export function readJuzes(): MushafJuz[] {
+  const raw = JSON.parse(readFileSync(`${DATA_DIR}/quran-metadata-juz.json`, 'utf8')) as unknown;
+  if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
+    throw new QulDataError('juz-shape', 'juz metadata file must be an object keyed by juz number');
+  }
+  const record = raw as Record<string, unknown>;
+  const keys = Object.keys(record);
+  if (keys.length !== JUZ_COUNT) {
+    throw new QulDataError('juz-count', `expected ${JUZ_COUNT} juz entries, got ${keys.length}`);
+  }
+  const juzes: MushafJuz[] = [];
+  for (let juz = 1; juz <= JUZ_COUNT; juz += 1) {
+    const entry = record[String(juz)];
+    if (entry === null || typeof entry !== 'object') {
+      throw new QulDataError('juz-missing', `juz entry missing for juz ${juz}`);
+    }
+    const fields = entry as Record<string, unknown>;
+    if (fields.juz_number !== juz) {
+      throw new QulDataError('juz-number', `juz ${juz} entry declares juz_number ${String(fields.juz_number)}`);
+    }
+    if (typeof fields.first_verse_key !== 'string' || typeof fields.last_verse_key !== 'string') {
+      throw new QulDataError('juz-keys', `juz ${juz} is missing first/last verse keys`);
+    }
+    const versesCount = fields.verses_count;
+    if (typeof versesCount !== 'number' || !Number.isInteger(versesCount) || versesCount < 1) {
+      throw new QulDataError('juz-verses-count', `juz ${juz} has an invalid verses_count ${String(versesCount)}`);
+    }
+    juzes.push({ juz, first: parseVerseKey(fields.first_verse_key), last: parseVerseKey(fields.last_verse_key), versesCount });
+  }
+  return juzes;
+}
+
+export function validateJuzesAgainstRefs(juzes: readonly MushafJuz[], refs: readonly AyahRef[]): void {
+  if (refs.length !== REFERENCE_AYAH_COUNT) {
+    throw new QulDataError('juz-refs-length', `cannot validate juzes against ${refs.length} refs, expected ${REFERENCE_AYAH_COUNT}`);
+  }
+  const position = new Map<string, number>();
+  for (let i = 0; i < refs.length; i += 1) {
+    position.set(`${refs[i].surah}:${refs[i].ayah}`, i);
+  }
+  for (const juz of juzes) {
+    const firstPos = position.get(`${juz.first.surah}:${juz.first.ayah}`);
+    const lastPos = position.get(`${juz.last.surah}:${juz.last.ayah}`);
+    if (firstPos === undefined || lastPos === undefined) {
+      throw new QulDataError('juz-ref-missing', `juz ${juz.juz} refers to an ayah not present in the mushaf word data`);
+    }
+    if (lastPos < firstPos) {
+      throw new QulDataError('juz-order', `juz ${juz.juz} has its last ayah before its first ayah`);
+    }
+  }
+  const first = juzes[0].first;
+  if (first.surah !== 1 || first.ayah !== 1) {
+    throw new QulDataError('juz-first', `the first juz must start at 1:1, got ${first.surah}:${first.ayah}`);
+  }
+  const last = juzes[juzes.length - 1].last;
+  if (last.surah !== END_OF_QURAN_REF.surah || last.ayah !== END_OF_QURAN_REF.ayah) {
+    throw new QulDataError('juz-last', `the last juz must end at ${END_OF_QURAN_REF.surah}:${END_OF_QURAN_REF.ayah}, got ${last.surah}:${last.ayah}`);
+  }
+  for (let i = 1; i < juzes.length; i += 1) {
+    const prevLastPos = position.get(`${juzes[i - 1].last.surah}:${juzes[i - 1].last.ayah}`);
+    const curFirstPos = position.get(`${juzes[i].first.surah}:${juzes[i].first.ayah}`);
+    if (prevLastPos === undefined || curFirstPos === undefined) {
+      throw new QulDataError('juz-continuity', `cannot check continuity around juz ${juzes[i].juz}`);
+    }
+    if (curFirstPos !== prevLastPos + 1) {
+      throw new QulDataError(
+        'juz-continuity',
+        `juz ${juzes[i].juz} starts at ${juzes[i].first.surah}:${juzes[i].first.ayah} but the previous juz ends at ${juzes[i - 1].last.surah}:${juzes[i - 1].last.ayah}`,
+      );
+    }
+  }
+  const sum = juzes.reduce((total, juz) => total + juz.versesCount, 0);
+  if (sum !== REFERENCE_AYAH_COUNT) {
+    throw new QulDataError('juz-verses-sum', `sum of juz verses_count is ${sum}, expected ${REFERENCE_AYAH_COUNT}`);
+  }
+}
+
 export function verifyInputIntegrity(): void {
   const raw = JSON.parse(readFileSync(MANIFEST_FILE, 'utf8')) as { materials?: ManifestMaterial[] };
   const materials = raw.materials;
@@ -240,6 +329,8 @@ export function buildIndexData(): BuildResult {
 
   const pages = buildPages(lines, wordRefs);
   const surahs = readSurahNames();
+  const juzes = readJuzes();
+  validateJuzesAgainstRefs(juzes, refs);
 
   const content = {
     format: INDEX_FORMAT as typeof INDEX_FORMAT,
@@ -253,6 +344,7 @@ export function buildIndexData(): BuildResult {
     },
     pages,
     surahs,
+    juzes,
   };
 
   const hash = createHash('sha256').update(canonicalJson(content)).digest('hex');
@@ -271,6 +363,7 @@ function main(): void {
   console.log(`layout: ${index.pages.length} pages, ${lines.length} lines (${ayahLines} ayah lines)`);
   console.log(`words: ${words.length} (1..${maxWord})`);
   console.log(`ayahs: ${refs.length} across ${new Set(refs.map((ref) => ref.surah)).size} surahs`);
+  console.log(`juzes: ${index.juzes.length} (1..${index.juzes[index.juzes.length - 1].juz})`);
   console.log(`index written to ${OUT_FILE}`);
   console.log(`hash: ${index.hash}`);
 }

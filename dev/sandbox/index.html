@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>تواسع — بيئة التجربة</title>
+    <style>
+      :root {
+        --bg: #f4f5f0;
+        --panel: #ffffff;
+        --ink: #1c2a26;
+        --muted: #6b7a75;
+        --line: #e2e6df;
+        --brand: #1f6f5c;
+        --brand-soft: #e6f2ee;
+        --bad: #b3382c;
+        --bad-soft: #fae9e6;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Segoe UI", Tahoma, "Noto Naskh Arabic", sans-serif;
+        line-height: 1.6;
+      }
+      header {
+        padding: 18px 24px;
+        background: linear-gradient(135deg, #14584a, #1f6f5c);
+        color: #fff;
+      }
+      header h1 { margin: 0; font-size: 20px; font-weight: 700; }
+      header p { margin: 4px 0 0; font-size: 13px; opacity: 0.85; }
+      .wrap { max-width: 1180px; margin: 0 auto; padding: 20px 16px 60px; }
+      .grid { display: grid; grid-template-columns: 340px 1fr; gap: 16px; align-items: start; }
+      @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+      .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+      .card h2 { margin: 0 0 12px; font-size: 15px; }
+      .row { margin-bottom: 10px; }
+      .row > label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
+      .row select,
+      .row input {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        font: inherit;
+        background: #fff;
+      }
+      .inline { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      .weekdays { display: grid; gap: 6px; }
+      .weekday-row { display: grid; grid-template-columns: 84px 1fr; gap: 8px; align-items: center; }
+      .weekday-row span { font-size: 13px; font-weight: 600; }
+      .weekday-row select {
+        width: 100%;
+        padding: 6px 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        font: inherit;
+        background: #fff;
+      }
+      .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+      .chip {
+        border: 1px solid var(--line);
+        background: #fff;
+        border-radius: 999px;
+        padding: 5px 12px;
+        font-size: 12px;
+        cursor: pointer;
+        color: var(--ink);
+      }
+      .chip.on { background: var(--brand); border-color: var(--brand); color: #fff; }
+      .btn {
+        width: 100%;
+        margin-top: 4px;
+        padding: 10px;
+        border: 0;
+        border-radius: 10px;
+        background: var(--brand);
+        color: #fff;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .btn:hover { filter: brightness(1.05); }
+      .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+      .pill { background: var(--brand-soft); color: var(--brand); border-radius: 999px; padding: 4px 12px; font-size: 12px; }
+      .pill.bad { background: var(--bad-soft); color: var(--bad); }
+      table { width: 100%; border-collapse: collapse; font-size: 13px; }
+      th, td { border-bottom: 1px solid var(--line); padding: 7px 8px; text-align: right; }
+      th { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+      tr.dim td { color: var(--muted); background: #fafbf8; }
+      .phrase { font-size: 11px; color: var(--brand); }
+      .err { background: var(--bad-soft); color: var(--bad); border-radius: 10px; padding: 10px 12px; font-size: 13px; }
+      .ok { background: var(--brand-soft); color: var(--brand); border-radius: 10px; padding: 10px 12px; font-size: 13px; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/dev/sandbox/sandbox.tsx"></script>
+  </body>
+</html>

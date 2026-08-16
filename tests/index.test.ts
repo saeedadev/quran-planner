@@ -7,6 +7,7 @@ import indexData from '../src/data/mushaf-index.json';
 import {
   INDEX_FORMAT,
   INDEX_VERSION,
+  JUZ_COUNT,
   MAX_SURAH,
   REFERENCE_AYAH_COUNT,
   REFERENCE_PAGE_COUNT,
@@ -27,6 +28,7 @@ function content(): Record<string, unknown> {
     source: index.source,
     pages: index.pages,
     surahs: index.surahs,
+    juzes: index.juzes,
   };
 }
 
@@ -120,5 +122,11 @@ describe('bundled mushaf index (src/data/mushaf-index.json)', () => {
       }
     }
     expect(wordCount).toBeGreaterThanOrEqual(REFERENCE_AYAH_COUNT);
+  });
+
+  it('holds the 30 juz boundaries starting at 1:1 and ending at 114:6', () => {
+    expect(index.juzes).toHaveLength(JUZ_COUNT);
+    expect(index.juzes[0].first).toEqual({ surah: 1, ayah: 1 });
+    expect(index.juzes[JUZ_COUNT - 1].last).toEqual({ surah: 114, ayah: 6 });
   });
 });
