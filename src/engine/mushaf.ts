@@ -331,6 +331,118 @@ function visualMid(first: AyahRef, last: AyahRef): AyahRef {
   return lines[split - 1].last;
 }
 
+// ==== تقسيم أقسام السور في الصفحات المشتركة ====
+// عندما تشترك صفحة في أكثر من سورة، لا يُقسم الوجه على منتصف الصفحة البصري العام،
+// بل تُقسَّم آيات كل سورة الموجودة في الصفحة (من أول آية لها إلى آخر آية) نصفين،
+// ويكون حد الانقسام عند حد آية يوازن عدد أسطر النصفين قدر الإمكان.
+// مثال: صفحة طه المشتركة (20:1..20:12) تُقسم 20:1..20:7 ثم 20:8..20:12،
+// وصفحة النور/الفرقان تُقسم 24:62 وحدها ثم 24:63..24:64 لأنها طويلة.
+function surahPageLineRange(page: number, surah: number): { startIdx: number; endIdx: number } | null {
+  const lines = ayahLinesOfPage(page);
+  let startIdx = -1;
+  let endIdx = -1;
+  for (let i = 0; i < lines.length; i += 1) {
+    const entry = lines[i];
+    if (entry.first.surah === surah || entry.last.surah === surah) {
+      if (startIdx < 0) {
+        startIdx = i;
+      }
+      endIdx = i;
+    } else if (startIdx >= 0) {
+      break;
+    }
+  }
+  if (startIdx < 0) {
+    return null;
+  }
+  return { startIdx, endIdx };
+}
+
+function portionAyahLineCount(lines: readonly AyahLineEntry[], first: AyahRef, last: AyahRef): number {
+  let count = 0;
+  for (const entry of lines) {
+    if (!isBefore(last, entry.first) && !isBefore(entry.last, first)) {
+      count += 1;
+    }
+  }
+  return count;
+}
+
+function splitSharedPortion(page: number, surah: number): {
+  readonly firstEnd: AyahRef;
+  readonly secondStart: AyahRef;
+  readonly portionStart: AyahRef;
+  readonly portionEnd: AyahRef;
+} | null {
+  const range = surahPageLineRange(page, surah);
+  if (!range) {
+    return null;
+  }
+  const lines = ayahLinesOfPage(page).slice(range.startIdx, range.endIdx + 1);
+  const firstEntry = lines[0];
+  const lastEntry = lines[lines.length - 1];
+  const portionStart = firstEntry.first.surah === surah ? firstEntry.first : firstEntry.last;
+  const portionEnd = lastEntry.last.surah === surah ? lastEntry.last : lastEntry.first;
+  if (portionStart.surah !== surah || portionEnd.surah !== surah) {
+    return null;
+  }
+  if (portionStart.ayah === portionEnd.ayah) {
+    return { firstEnd: portionEnd, secondStart: portionEnd, portionStart, portionEnd };
+  }
+  let firstEnd: AyahRef = portionStart;
+  let bestBalance = Number.POSITIVE_INFINITY;
+  let cursor: AyahRef | null = portionStart;
+  while (cursor !== null && (cursor.surah !== portionEnd.surah || cursor.ayah !== portionEnd.ayah)) {
+    const second = nextRef(cursor);
+    if (second === null) {
+      break;
+    }
+    const firstCount = portionAyahLineCount(lines, portionStart, cursor);
+    const secondCount = portionAyahLineCount(lines, second, portionEnd);
+    const balance = Math.abs(firstCount - secondCount);
+    if (balance < bestBalance || (balance === bestBalance && cursor.ayah > firstEnd.ayah)) {
+      bestBalance = balance;
+      firstEnd = cursor;
+    }
+    cursor = second;
+  }
+  const secondStart = nextRef(firstEnd);
+  if (secondStart === null) {
+    return null;
+  }
+  return { firstEnd, secondStart, portionStart, portionEnd };
+}
+
+// النهج المختلط: نقسم السورة في الصفحة المشتركة بالتوازن السطري فقط إذا كان قسمها كبيراً
+// (> 50% من أسطر الصفحة) ويعبر المنتصف البصري. إذا كان صغيراً (≤ 50%) فهو يمثل نصف
+// الوجه بالفعل (مثل يونس/هود في صفحتهما المشتركة) فلا نقسمه ونستخدم التقسيم البصري القديم.
+function sharedBalanceIfLarge(page: number, surah: number): {
+  readonly firstEnd: AyahRef;
+  readonly secondStart: AyahRef;
+  readonly portionStart: AyahRef;
+  readonly portionEnd: AyahRef;
+} | null {
+  const portion = splitSharedPortion(page, surah);
+  if (!portion) {
+    return null;
+  }
+  const lines = ayahLinesOfPage(page);
+  const visualSplit = Math.floor(lines.length / 2);
+  if (visualSplit < 1) {
+    return null;
+  }
+  const portionStartLine = lineIndexOf(portion.portionStart);
+  const portionEndLine = lineIndexOf(portion.portionEnd);
+  const startPos = lines.findIndex((entry) => entry.line === portionStartLine);
+  const endPos = lines.findIndex((entry) => entry.line === portionEndLine);
+  if (startPos < 0 || endPos < 0) {
+    return null;
+  }
+  const crossesSplit = startPos < visualSplit && endPos >= visualSplit;
+  const isLarge = (endPos - startPos + 1) > lines.length / 2;
+  return crossesSplit && isLarge ? portion : null;
+}
+
 function assertRegionsDisjoint(regions: readonly FaceRegion[]): void {
   for (let i = 0; i < regions.length; i += 1) {
     for (let j = i + 1; j < regions.length; j += 1) {
@@ -444,6 +556,16 @@ export function endOfFace(ref: AyahRef): AyahRef {
     return clampToSurahEnd(faceEnd, ref.surah);
   }
   const lines = ayahLinesOfPage(page);
+  // صفحة مشتركة: إذا كان قسم السورة كبيراً (> 50% من الصفحة) ويعبر المنتصف البصري
+  // (مثل طه 20:1-12 أو النور 24:62-64)، نقسمه بالتوازن السطري.
+  // إذا كان القسم صغيراً (≤ 50%) فهو نصف الوجه بالفعل فلا نقسمه.
+  if (pageSurahs(page).size > 1) {
+    const balance = sharedBalanceIfLarge(page, ref.surah);
+    if (balance) {
+      const faceEnd = isBeforeOrEqual(ref, balance.firstEnd) ? balance.firstEnd : balance.portionEnd;
+      return clampToSurahEnd(faceEnd, ref.surah);
+    }
+  }
   const split = Math.floor(lines.length / 2);
   const currentLine = lineIndexOf(ref);
   const currentPosition = lines.findIndex((entry) => entry.line === currentLine);
@@ -473,6 +595,12 @@ export function startOfFace(ref: AyahRef): AyahRef {
     return region.start;
   }
   const lines = ayahLinesOfPage(page);
+  if (pageSurahs(page).size > 1) {
+    const balance = sharedBalanceIfLarge(page, ref.surah);
+    if (balance) {
+      return isBeforeOrEqual(ref, balance.firstEnd) ? balance.portionStart : balance.secondStart;
+    }
+  }
   const split = Math.floor(lines.length / 2);
   const currentLine = lineIndexOf(ref);
   const currentPosition = lines.findIndex((entry) => entry.line === currentLine);

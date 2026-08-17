@@ -92,8 +92,18 @@ describe('mushaf layer (scratch)', () => {
     expect(endOfFace({ surah: 18, ayah: 16 })).toEqual({ surah: 18, ayah: 18 });
     expect(endOfFace({ surah: 19, ayah: 77 })).toEqual({ surah: 19, ayah: 87 });
     expect(endOfFace({ surah: 19, ayah: 88 })).toEqual({ surah: 19, ayah: 98 });
-    expect(endOfFace({ surah: 20, ayah: 1 })).toEqual({ surah: 20, ayah: 4 });
+  });
+
+  it('endOfFace splits large shared portions using balance, keeps small ones as one face', () => {
+    // طه: قسم كبير (>50% من الصفحة) يعبر النصف البصري → توازن سطري:
+    expect(endOfFace({ surah: 20, ayah: 1 })).toEqual({ surah: 20, ayah: 7 });
+    expect(endOfFace({ surah: 20, ayah: 8 })).toEqual({ surah: 20, ayah: 12 });
+    // النور: قسم كبير (>50%) → توازن (آية 62 وحدها لأنها طويلة):
+    expect(endOfFace({ surah: 24, ayah: 62 })).toEqual({ surah: 24, ayah: 62 });
+    expect(endOfFace({ surah: 24, ayah: 63 })).toEqual({ surah: 24, ayah: 64 });
+    // الفلق/الناس: أقسام صغيرة (≤50%) → التقسيم البصري القديم (نصف الصفحة):
     expect(endOfFace({ surah: 113, ayah: 1 })).toEqual({ surah: 113, ayah: 4 });
+    expect(endOfFace({ surah: 114, ayah: 1 })).toEqual({ surah: 114, ayah: 6 });
   });
 
   it('endOfFace splits by the visual middle of the page, not by ayah count', () => {
@@ -105,10 +115,11 @@ describe('mushaf layer (scratch)', () => {
 
   it('endOfFace never crosses into the next surah when a surah ends mid-page', () => {
     expect(endOfFace({ surah: 10, ayah: 107 })).toEqual({ surah: 10, ayah: 109 });
+    expect(endOfFace({ surah: 10, ayah: 108 })).toEqual({ surah: 10, ayah: 109 });
     expect(endOfFace({ surah: 11, ayah: 1 })).toEqual({ surah: 11, ayah: 5 });
     expect(endOfFace({ surah: 15, ayah: 91 })).toEqual({ surah: 15, ayah: 99 });
     expect(endOfFace({ surah: 16, ayah: 1 })).toEqual({ surah: 16, ayah: 6 });
-    expect(endOfFace({ surah: 17, ayah: 105 })).toEqual({ surah: 17, ayah: 110 });
+    expect(endOfFace({ surah: 17, ayah: 105 })).toEqual({ surah: 17, ayah: 108 });
     expect(endOfFace({ surah: 17, ayah: 111 })).toEqual({ surah: 17, ayah: 111 });
   });
 
@@ -125,7 +136,10 @@ describe('mushaf layer (scratch)', () => {
   it('startOfFace/startOfPage are region-aware and begin at the merged face start', () => {
     expect(startOfFace({ surah: 18, ayah: 9 })).toEqual({ surah: 18, ayah: 1 });
     expect(startOfFace({ surah: 19, ayah: 88 })).toEqual({ surah: 19, ayah: 77 });
-    expect(startOfFace({ surah: 20, ayah: 1 })).toEqual({ surah: 19, ayah: 96 });
+    expect(startOfFace({ surah: 20, ayah: 1 })).toEqual({ surah: 20, ayah: 1 });
+    expect(startOfFace({ surah: 20, ayah: 8 })).toEqual({ surah: 20, ayah: 8 });
+    expect(startOfFace({ surah: 24, ayah: 62 })).toEqual({ surah: 24, ayah: 62 });
+    expect(startOfFace({ surah: 24, ayah: 63 })).toEqual({ surah: 24, ayah: 63 });
     expect(startOfPage({ surah: 18, ayah: 9 })).toEqual({ surah: 18, ayah: 1 });
     expect(startOfPage({ surah: 19, ayah: 88 })).toEqual({ surah: 19, ayah: 77 });
     expect(startOfPage({ surah: 113, ayah: 1 })).toEqual({ surah: 113, ayah: 1 });
