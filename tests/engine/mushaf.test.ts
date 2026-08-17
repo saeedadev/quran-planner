@@ -15,6 +15,7 @@ import {
   pageOf,
   prevRef,
   refExists,
+  SPLIT_POLICY,
   startOfFace,
   startOfPage,
   surahName,
@@ -101,8 +102,9 @@ describe('mushaf layer (scratch)', () => {
     // النور: قسم كبير (>50%) → توازن (آية 62 وحدها لأنها طويلة):
     expect(endOfFace({ surah: 24, ayah: 62 })).toEqual({ surah: 24, ayah: 62 });
     expect(endOfFace({ surah: 24, ayah: 63 })).toEqual({ surah: 24, ayah: 64 });
-    // الفلق/الناس: أقسام صغيرة (≤50%) → التقسيم البصري القديم (نصف الصفحة):
-    expect(endOfFace({ surah: 113, ayah: 1 })).toEqual({ surah: 113, ayah: 4 });
+    // الفلق: سياسة 'whole' → السورة كاملة بدون تقسيم:
+    expect(endOfFace({ surah: 113, ayah: 1 })).toEqual({ surah: 113, ayah: 5 });
+    // الناس: سياسة 'whole' → السورة كاملة بدون تقسيم:
     expect(endOfFace({ surah: 114, ayah: 1 })).toEqual({ surah: 114, ayah: 6 });
   });
 
@@ -166,5 +168,116 @@ describe('mushaf layer (scratch)', () => {
     expect(isRefInRange({ surah: 1, ayah: 7 }, first, last)).toBe(true);
     expect(isRefInRange({ surah: 2, ayah: 5 }, first, last)).toBe(true);
     expect(isRefInRange({ surah: 2, ayah: 6 }, first, last)).toBe(false);
+  });
+
+  describe('split policy', () => {
+    it('whole surahs are never split: endOfFace returns the last ayah', () => {
+      const wholeSurahs = [86, 91, 93, 94, 95, 97, 100, 101, 104, 107, 113, 114];
+      for (const surah of wholeSurahs) {
+        expect(SPLIT_POLICY[surah]).toBe('whole');
+        const first = { surah, ayah: 1 };
+        expect(endOfFace(first)).toEqual({ surah, ayah: expect.any(Number) });
+        const end = endOfFace(first);
+        expect(end.surah).toBe(surah);
+      }
+    });
+
+    it('whole surahs: startOfFace returns the first ayah', () => {
+      const wholeSurahs = [86, 91, 93, 94, 95, 97, 100, 101, 104, 107, 113, 114];
+      for (const surah of wholeSurahs) {
+        const first = { surah, ayah: 1 };
+        expect(startOfFace(first)).toEqual({ surah, ayah: 1 });
+      }
+    });
+
+    it('half surahs are split into exactly 2 parts', () => {
+      const halfSurahs = [80, 82, 84, 85, 87, 88, 90, 92, 96, 98];
+      for (const surah of halfSurahs) {
+        expect(SPLIT_POLICY[surah]).toBe('half');
+        const first = { surah, ayah: 1 };
+        const mid = endOfFace(first);
+        expect(mid.surah).toBe(surah);
+        expect(mid.ayah).toBeGreaterThan(1);
+        const afterMid = nextRef(mid);
+        expect(afterMid).not.toBeNull();
+        if (afterMid) {
+          const end = endOfFace(afterMid);
+          expect(end.surah).toBe(surah);
+          expect(end.ayah).toBeGreaterThan(mid.ayah);
+        }
+      }
+    });
+
+    it('half surahs: startOfFace returns first ayah in first half, mid+1 in second', () => {
+      const halfSurahs = [80, 82, 84, 85, 87, 88, 90, 92, 96, 98];
+      for (const surah of halfSurahs) {
+        const first = { surah, ayah: 1 };
+        const mid = endOfFace(first);
+        expect(startOfFace(first)).toEqual({ surah, ayah: 1 });
+        const secondHalfStart = { surah, ayah: mid.ayah + 1 };
+        const expected = { surah, ayah: mid.ayah + 1 };
+        expect(startOfFace(secondHalfStart)).toEqual(expected);
+      }
+    });
+
+    it('Al-Mutaffifin (83) is split into exactly 3 parts', () => {
+      expect(SPLIT_POLICY[83]).toBe('thirds');
+      const first = { surah: 83, ayah: 1 };
+      const t1 = endOfFace(first);
+      expect(t1.surah).toBe(83);
+      const t2 = endOfFace(nextRef(t1)!);
+      expect(t2.surah).toBe(83);
+      expect(t2.ayah).toBeGreaterThan(t1.ayah);
+      const t3 = endOfFace(nextRef(t2)!);
+      expect(t3.surah).toBe(83);
+      expect(t3.ayah).toBeGreaterThan(t2.ayah);
+      expect(t3.ayah).toBe(36);
+    });
+
+    it('Al-Falaq (113) is taken whole: 5 ayahs in one face', () => {
+      const result = endOfFace({ surah: 113, ayah: 1 });
+      expect(result).toEqual({ surah: 113, ayah: 5 });
+    });
+
+    it('An-Nas (114) is taken whole: 6 ayahs in one face', () => {
+      const result = endOfFace({ surah: 114, ayah: 1 });
+      expect(result).toEqual({ surah: 114, ayah: 6 });
+    });
+
+    it('An-Nasr (110) is taken whole: all ayahs in one face', () => {
+      expect(SPLIT_POLICY[110]).toBe('whole');
+      const result = endOfFace({ surah: 110, ayah: 1 });
+      expect(result).toEqual({ surah: 110, ayah: 3 });
+    });
+
+    it('Al-Qiyamah (75) is split into exactly 3 parts', () => {
+      expect(SPLIT_POLICY[75]).toBe('thirds');
+      const first = { surah: 75, ayah: 1 };
+      const t1 = endOfFace(first);
+      expect(t1.surah).toBe(75);
+      const t2 = endOfFace(nextRef(t1)!);
+      expect(t2.surah).toBe(75);
+      expect(t2.ayah).toBeGreaterThan(t1.ayah);
+      const t3 = endOfFace(nextRef(t2)!);
+      expect(t3.surah).toBe(75);
+      expect(t3.ayah).toBeGreaterThan(t2.ayah);
+      expect(t3.ayah).toBe(40);
+    });
+
+    it('Al-Qalam (68) is split into exactly 4 parts', () => {
+      expect(SPLIT_POLICY[68]).toBe('quarters');
+      const first = { surah: 68, ayah: 1 };
+      const q1 = endOfFace(first);
+      expect(q1.surah).toBe(68);
+      const q2 = endOfFace(nextRef(q1)!);
+      expect(q2.surah).toBe(68);
+      expect(q2.ayah).toBeGreaterThan(q1.ayah);
+      const q3 = endOfFace(nextRef(q2)!);
+      expect(q3.surah).toBe(68);
+      expect(q3.ayah).toBeGreaterThan(q2.ayah);
+      const q4 = endOfFace(nextRef(q3)!);
+      expect(q4.surah).toBe(68);
+      expect(q4.ayah).toBe(52);
+    });
   });
 });

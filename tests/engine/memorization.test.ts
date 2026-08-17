@@ -69,8 +69,8 @@ describe('memorization layer (scratch)', () => {
     expect(schedule.days[0].newMemorization).toEqual({ from: { surah: 114, ayah: 1 }, to: { surah: 114, ayah: 6 } });
     expect(schedule.days[0].pointerAfter).toEqual({ surah: 114, ayah: 6 });
     expect(schedule.days[0].completedSurahs).toEqual([114]);
-    expect(schedule.days[1].newMemorization).toEqual({ from: { surah: 113, ayah: 1 }, to: { surah: 113, ayah: 4 } });
-    expect(schedule.days[1].completedSurahs).toEqual([114]);
+    expect(schedule.days[1].newMemorization).toEqual({ from: { surah: 113, ayah: 1 }, to: { surah: 113, ayah: 5 } });
+    expect(schedule.days[1].completedSurahs).toEqual([113, 114]);
   });
 
   it('reverse ayahs rate walks forward within the surah without reversing ayahs', () => {

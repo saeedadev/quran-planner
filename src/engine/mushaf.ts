@@ -459,6 +459,45 @@ function assertRegionsDisjoint(regions: readonly FaceRegion[]): void {
   }
 }
 
+// ==== سياسة تقسيم السور ====
+// بعض السور القصيرة لا يجب تقسيمها أبداً (وجه واحد كاملاً)، وبعضها يُقسم بالضبط لعدد محدد.
+// هذا يتجاوز التقسيم البصري للصفحة ويضمن الحفاظ على وحدات الحفظ صحيحة.
+// Sources: user-provided memorization policy per surah.
+type SplitPolicy = 'whole' | 'half' | 'thirds' | 'quarters';
+
+export const SPLIT_POLICY: Readonly<Record<number, SplitPolicy>> = {
+  // لا تقسيم — سورة كاملة كوجه واحد
+  86: 'whole',  // الطارق
+  91: 'whole',  // الشمس
+  93: 'whole',  // الضحى
+  94: 'whole',  // الشرح
+  95: 'whole',  // التين
+  97: 'whole',  // القدر
+  100: 'whole', // العاديات
+  101: 'whole', // القارعة
+  104: 'whole', // الهمزة
+  107: 'whole', // الماعون
+  110: 'whole', // النصر
+  113: 'whole', // الفلق
+  114: 'whole', // الناس
+  // قسمان فقط
+  80: 'half',   // عبس
+  82: 'half',   // الانفطار
+  84: 'half',   // الانشقاق
+  85: 'half',   // البروج
+  87: 'half',   // الأعلى
+  88: 'half',   // الغاشية
+  90: 'half',   // البلد
+  92: 'half',   // الليل
+  96: 'half',   // العلق
+  98: 'half',   // البينة
+  // ثلاثة أقسام فقط
+  83: 'thirds', // المطففين
+  75: 'thirds', // القيامة
+  // أربعة أقسام فقط
+  68: 'quarters', // القلم
+};
+
 function buildFaceRegions(): readonly FaceRegion[] {
   const regions: FaceRegion[] = [];
   const lastPageNum = index.pages[index.pages.length - 1].page;
@@ -467,6 +506,7 @@ function buildFaceRegions(): readonly FaceRegion[] {
     regions.push({ start, mid, end });
   };
   for (let surah = 1; surah <= index.surahs.length; surah += 1) {
+    if (surah in SPLIT_POLICY) continue;
     const firstPage = firstPageOfSurah(surah);
     const lastPage = lastPageOfSurah(surah);
     if (firstPage < 1 || lastPage < 1) {
@@ -543,6 +583,36 @@ export function endOfFace(ref: AyahRef): AyahRef {
   if (!refExists(ref)) {
     fail('ref-not-found', `ref ${formatAyahRef(ref)} is not in the index`);
   }
+  const policy = SPLIT_POLICY[ref.surah];
+  if (policy === 'whole') {
+    return surahEnd(ref.surah);
+  }
+  if (policy === 'half') {
+    const count = table.ayahCountBySurah[ref.surah] ?? 0;
+    const mid = Math.ceil(count / 2);
+    const midRef: AyahRef = { surah: ref.surah, ayah: mid };
+    return isBeforeOrEqual(ref, midRef) ? midRef : surahEnd(ref.surah);
+  }
+  if (policy === 'thirds') {
+    const count = table.ayahCountBySurah[ref.surah] ?? 0;
+    const third = Math.ceil(count / 3);
+    const t1: AyahRef = { surah: ref.surah, ayah: third };
+    const t2: AyahRef = { surah: ref.surah, ayah: 2 * third };
+    if (isBeforeOrEqual(ref, t1)) return t1;
+    if (isBeforeOrEqual(ref, t2)) return t2;
+    return surahEnd(ref.surah);
+  }
+  if (policy === 'quarters') {
+    const count = table.ayahCountBySurah[ref.surah] ?? 0;
+    const q = Math.ceil(count / 4);
+    const q1: AyahRef = { surah: ref.surah, ayah: q };
+    const q2: AyahRef = { surah: ref.surah, ayah: 2 * q };
+    const q3: AyahRef = { surah: ref.surah, ayah: 3 * q };
+    if (isBeforeOrEqual(ref, q1)) return q1;
+    if (isBeforeOrEqual(ref, q2)) return q2;
+    if (isBeforeOrEqual(ref, q3)) return q3;
+    return surahEnd(ref.surah);
+  }
   const page = pageOf(ref);
   if (page === 1) {
     return endOfFatihah();
@@ -582,6 +652,38 @@ export function endOfFace(ref: AyahRef): AyahRef {
 export function startOfFace(ref: AyahRef): AyahRef {
   if (!refExists(ref)) {
     fail('ref-not-found', `ref ${formatAyahRef(ref)} is not in the index`);
+  }
+  const policy = SPLIT_POLICY[ref.surah];
+  if (policy === 'whole') {
+    return surahStart(ref.surah);
+  }
+  if (policy === 'half') {
+    const count = table.ayahCountBySurah[ref.surah] ?? 0;
+    const mid = Math.ceil(count / 2);
+    const midRef: AyahRef = { surah: ref.surah, ayah: mid };
+    if (isBeforeOrEqual(ref, midRef)) return surahStart(ref.surah);
+    const secondStart = nextRef(midRef) ?? midRef;
+    return secondStart;
+  }
+  if (policy === 'thirds') {
+    const count = table.ayahCountBySurah[ref.surah] ?? 0;
+    const third = Math.ceil(count / 3);
+    const t1: AyahRef = { surah: ref.surah, ayah: third };
+    const t2: AyahRef = { surah: ref.surah, ayah: 2 * third };
+    if (isBeforeOrEqual(ref, t1)) return surahStart(ref.surah);
+    if (isBeforeOrEqual(ref, t2)) return nextRef(t1) ?? t1;
+    return nextRef(t2) ?? t2;
+  }
+  if (policy === 'quarters') {
+    const count = table.ayahCountBySurah[ref.surah] ?? 0;
+    const q = Math.ceil(count / 4);
+    const q1: AyahRef = { surah: ref.surah, ayah: q };
+    const q2: AyahRef = { surah: ref.surah, ayah: 2 * q };
+    const q3: AyahRef = { surah: ref.surah, ayah: 3 * q };
+    if (isBeforeOrEqual(ref, q1)) return surahStart(ref.surah);
+    if (isBeforeOrEqual(ref, q2)) return nextRef(q1) ?? q1;
+    if (isBeforeOrEqual(ref, q3)) return nextRef(q2) ?? q2;
+    return nextRef(q3) ?? q3;
   }
   const page = pageOf(ref);
   if (page === 1) {
