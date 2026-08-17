@@ -66,8 +66,12 @@ function validateGrandReview(config: PlanConfig['grandReview']): void {
   if (config === null || typeof config !== 'object') {
     fail('grand-review', 'grand review settings are required');
   }
-  if (!Number.isInteger(config.ayahsPerRound) || config.ayahsPerRound < 1) {
-    fail('grand-review-amount', 'grand review ayahsPerRound must be a positive integer');
+  const validUnits = ['ayahs', 'pages', 'quarters', 'ajza'];
+  if (!validUnits.includes(config.unit)) {
+    fail('grand-review-unit', `unknown grand review unit "${String(config.unit)}"`);
+  }
+  if (!Number.isInteger(config.count) || config.count < 1) {
+    fail('grand-review-amount', 'grand review count must be a positive integer');
   }
 }
 

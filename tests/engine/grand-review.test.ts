@@ -13,7 +13,7 @@ function closedConfig(overrides: Partial<PlanConfig> & object): PlanConfig {
     startRef: { surah: 1, ayah: 1 },
     rate: { type: 'half-page' },
     weeklyPattern: ['study', 'study', 'rest', 'rest', 'rest', 'rest', 'rest'],
-    grandReview: { ayahsPerRound: 10 },
+    grandReview: { unit: 'ayahs', count: 10 },
     dates: { start: '2026-09-01', end: '2026-09-07' },
   };
   return { ...base, ...overrides } as PlanConfig;
@@ -32,7 +32,7 @@ describe('grand-review layer (scratch)', () => {
         startRef: { surah: 2, ayah: 1 },
         rate: { type: 'ayahs', count: 2 },
         weeklyPattern: fiveStudyPattern,
-        grandReview: { ayahsPerRound: 2 },
+        grandReview: { unit: 'ayahs', count: 2 },
       }),
     );
     expect(output).toEqual([null, null, null, null, null, null, null]);
@@ -43,7 +43,7 @@ describe('grand-review layer (scratch)', () => {
       closedConfig({
         rate: { type: 'full-page' },
         weeklyPattern: fiveStudyPattern,
-        grandReview: { ayahsPerRound: 2 },
+        grandReview: { unit: 'ayahs', count: 2 },
       }),
     );
     expect(output[0]).toEqual({ from: { surah: 1, ayah: 1 }, to: { surah: 1, ayah: 2 } });
@@ -55,7 +55,7 @@ describe('grand-review layer (scratch)', () => {
       closedConfig({
         rate: { type: 'ayahs', count: 7 },
         weeklyPattern: fiveStudyPattern,
-        grandReview: { ayahsPerRound: 2 },
+        grandReview: { unit: 'ayahs', count: 2 },
       }),
     );
     expect(output[0]).toBeNull();
@@ -72,7 +72,7 @@ describe('grand-review layer (scratch)', () => {
       closedConfig({
         rate: { type: 'ayahs', count: 2 },
         weeklyPattern: fiveStudyPattern,
-        grandReview: { ayahsPerRound: 2 },
+        grandReview: { unit: 'ayahs', count: 2 },
         dates: { start: '2026-09-01', end: '2026-09-14' },
       }),
     );
@@ -98,7 +98,7 @@ describe('grand-review layer (scratch)', () => {
         startRef: { surah: 2, ayah: 284 },
         rate: { type: 'ayahs', count: 3 },
         weeklyPattern: fiveStudyPattern,
-        grandReview: { ayahsPerRound: 150 },
+        grandReview: { unit: 'ayahs', count: 150 },
       }),
     );
     expect(juzEndOf({ surah: 2, ayah: 1 })).toEqual({ surah: 2, ayah: 141 });
@@ -113,7 +113,7 @@ describe('grand-review layer (scratch)', () => {
         startRef: { surah: 114, ayah: 6 },
         rate: { type: 'ayahs', count: 3 },
         weeklyPattern: fiveStudyPattern,
-        grandReview: { ayahsPerRound: 3 },
+        grandReview: { unit: 'ayahs', count: 3 },
       }),
     );
     expect(output[0]).toBeNull();

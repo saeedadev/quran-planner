@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
-import type { ComputeResult, DayKind, PlanConfig, PlanRange } from '@shared/plan-types';
+import type { ComputeResult, DayKind, GrandReviewUnit, PlanConfig, PlanRange } from '@shared/plan-types';
 import { PlanConfigError } from '@shared/plan-validation';
 
 import { computePlan } from '../../src/engine/merge';
@@ -89,6 +89,13 @@ function allRefsOf(result: ComputeResult): { from: { surah: number; ayah: number
 
 const SURAH_OPTIONS: readonly number[] = Array.from({ length: 114 }, (_, index) => index + 1);
 
+const GRAND_REVIEW_UNITS: { value: GrandReviewUnit; label: string }[] = [
+  { value: 'ayahs', label: 'بالآيات' },
+  { value: 'pages', label: 'بالصفحات' },
+  { value: 'quarters', label: 'بالأرباع' },
+  { value: 'ajza', label: 'بالأحزاب' },
+];
+
 function Sandbox() {
   const [kind, setKind] = useState<'closed' | 'open'>('closed');
   const [direction, setDirection] = useState<'forward' | 'reverse'>('forward');
@@ -97,7 +104,8 @@ function Sandbox() {
   const [rateType, setRateType] = useState<'half-page' | 'full-page' | 'ayahs'>('full-page');
   const [count, setCount] = useState('20');
   const [weekDays, setWeekDays] = useState<Record<WeekdayKey, DayKind>>(DEFAULT_WEEK_DAYS);
-  const [ayahsPerRound, setAyahsPerRound] = useState('10');
+  const [grandReviewUnit, setGrandReviewUnit] = useState<GrandReviewUnit>('ayahs');
+  const [grandReviewCount, setGrandReviewCount] = useState('10');
   const [start, setStart] = useState('2026-09-01');
   const [end, setEnd] = useState('2026-10-31');
   const [weeks, setWeeks] = useState('4');
@@ -115,7 +123,7 @@ function Sandbox() {
       startRef: { surah: Number(surah), ayah: Number(ayah) },
       rate,
       weeklyPattern: buildPattern(weekDays, start),
-      grandReview: { ayahsPerRound: Number(ayahsPerRound) },
+      grandReview: { unit: grandReviewUnit, count: Number(grandReviewCount) },
     };
     const config =
       kind === 'closed'
@@ -205,9 +213,21 @@ function Sandbox() {
                 ))}
               </div>
             </div>
-            <div className="row">
-              <label>المراجعة الكبرى: مقدار يومي (تحدده المعلمة)</label>
-              <input type="number" min={1} value={ayahsPerRound} onChange={(e) => setAyahsPerRound(e.target.value)} />
+            <div className="row inline">
+              <div>
+                <label>المراجعة الكبرى: الوحدة</label>
+                <select value={grandReviewUnit} onChange={(e) => setGrandReviewUnit(e.target.value as GrandReviewUnit)}>
+                  {GRAND_REVIEW_UNITS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label>العدد يومياً</label>
+                <input type="number" min={1} value={grandReviewCount} onChange={(e) => setGrandReviewCount(e.target.value)} />
+              </div>
             </div>
             {kind === 'closed' ? (
               <div className="row inline">

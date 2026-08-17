@@ -12,7 +12,7 @@ const baseClosed: PlanConfig = {
   startRef: { surah: 2, ayah: 1 },
   rate: { type: 'half-page' },
   weeklyPattern: ['study', 'study', 'study', 'study', 'tathbeet', 'rest', 'rest'],
-  grandReview: { ayahsPerRound: 10 },
+  grandReview: { unit: 'ayahs', count: 10 },
   dates: { start: '2026-09-01', end: '2026-09-07' },
 };
 
@@ -22,7 +22,7 @@ const baseOpen: PlanConfig = {
   startRef: { surah: 2, ayah: 1 },
   rate: { type: 'ayahs', count: 5 },
   weeklyPattern: ['study', 'study', 'study', 'study', 'study', 'rest', 'rest'],
-  grandReview: { ayahsPerRound: 10 },
+  grandReview: { unit: 'ayahs', count: 10 },
   weeks: 4,
   startDate: '2026-09-01',
 };

@@ -12,8 +12,11 @@ export type Rate =
   | { readonly type: 'full-page' }
   | { readonly type: 'ayahs'; readonly count: number };
 
+export type GrandReviewUnit = 'ayahs' | 'pages' | 'quarters' | 'ajza';
+
 export interface GrandReviewConfig {
-  readonly ayahsPerRound: number;
+  readonly unit: GrandReviewUnit;
+  readonly count: number;
 }
 
 export type PlanConfig =

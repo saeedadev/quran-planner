@@ -13,7 +13,7 @@ function closedConfig(overrides: Partial<PlanConfig> & object): PlanConfig {
     startRef: { surah: 1, ayah: 1 },
     rate: { type: 'ayahs', count: 7 },
     weeklyPattern: ['study', 'study', 'study', 'study', 'tathbeet', 'rest', 'rest'],
-    grandReview: { ayahsPerRound: 3 },
+    grandReview: { unit: 'ayahs', count: 3 },
     dates: { start: '2026-09-01', end: '2026-09-14' },
   };
   return { ...base, ...overrides } as PlanConfig;

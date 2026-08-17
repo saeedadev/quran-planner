@@ -11,7 +11,7 @@ function closedConfig(overrides: Partial<PlanConfig> & object): PlanConfig {
     startRef: { surah: 1, ayah: 1 },
     rate: { type: 'half-page' },
     weeklyPattern: ['study', 'study', 'rest', 'rest', 'rest', 'rest', 'rest'],
-    grandReview: { ayahsPerRound: 10 },
+    grandReview: { unit: 'ayahs', count: 10 },
     dates: { start: '2026-09-01', end: '2026-09-07' },
   };
   return { ...base, ...overrides } as PlanConfig;
@@ -113,7 +113,7 @@ describe('memorization layer (scratch)', () => {
       startRef: { surah: 2, ayah: 1 },
       rate: { type: 'ayahs', count: 2 },
       weeklyPattern: ['study', 'study', 'study', 'study', 'study', 'rest', 'rest'],
-      grandReview: { ayahsPerRound: 10 },
+      grandReview: { unit: 'ayahs', count: 10 },
       weeks: 1,
       startDate: '2026-09-01',
     });
