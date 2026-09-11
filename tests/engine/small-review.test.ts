@@ -83,7 +83,7 @@ describe('small-review layer (scratch)', () => {
     const output = days(
       closedConfig({
         direction: 'reverse',
-        startRef: { surah: 114, ayah: 1 },
+        startRef: { surah: 114, ayah: 6 },
         rate: { type: 'ayahs', count: 2 },
         weeklyPattern: ['study', 'study', 'study', 'tathbeet', 'rest', 'rest', 'rest'],
       }),

@@ -2,7 +2,7 @@ import type { AyahRef } from '@shared/types';
 
 import type { DayKind, PlanConfig, PlanRange } from '@shared/plan-types';
 
-import { surahStart } from './mushaf';
+import { surahEnd, surahStart } from './mushaf';
 
 import type { MemorizationSchedule } from './memorization';
 
@@ -31,6 +31,7 @@ function firstStudyAfterSardPositions(kinds: readonly DayKind[]): Set<number> {
 }
 
 export function buildSmallReviewSchedule(config: PlanConfig, schedule: MemorizationSchedule): SmallReviewSchedule {
+  const forward = config.direction === 'forward';
   const pattern = config.weeklyPattern;
   const excludedPositions = firstStudyAfterSardPositions(pattern);
 

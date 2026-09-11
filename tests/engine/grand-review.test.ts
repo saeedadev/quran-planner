@@ -117,10 +117,10 @@ describe('grand-review layer (scratch)', () => {
       }),
     );
     expect(output[0]).toBeNull();
-    expect(output[1]).toEqual({ from: { surah: 114, ayah: 4 }, to: { surah: 114, ayah: 6 } });
-    expect(output[2]).toEqual({ from: { surah: 114, ayah: 1 }, to: { surah: 114, ayah: 3 } });
-    expect(output[3]).toEqual({ from: { surah: 114, ayah: 4 }, to: { surah: 114, ayah: 6 } });
-    expect(output[4]).toEqual({ from: { surah: 114, ayah: 1 }, to: { surah: 114, ayah: 3 } });
+    expect(output[1]).toBeNull();
+    expect(output[2]).toEqual({ from: { surah: 114, ayah: 4 }, to: { surah: 114, ayah: 6 } });
+    expect(output[3]).toEqual({ from: { surah: 114, ayah: 1 }, to: { surah: 114, ayah: 3 } });
+    expect(output[4]).toEqual({ from: { surah: 114, ayah: 4 }, to: { surah: 114, ayah: 6 } });
     expect(output[5]).toBeNull();
     expect(output[6]).toBeNull();
   });

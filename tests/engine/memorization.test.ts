@@ -62,36 +62,119 @@ describe('memorization layer (scratch)', () => {
     expect(schedule.endDayIndex).toBe(0);
   });
 
-  it('reverse half-page starts at the end surah and reads its ayahs forward', () => {
+  it('reverse full-page traverses all 24 Juz Amma units accurately with complete surahs', () => {
     const schedule = buildMemorizationSchedule(
-      closedConfig({ direction: 'reverse', startRef: { surah: 114, ayah: 1 } }),
+      closedConfig({
+        direction: 'reverse',
+        startRef: { surah: 114, ayah: 6 },
+        rate: { type: 'full-page' },
+        weeklyPattern: new Array(24).fill('study'),
+        dates: { start: '2026-09-01', end: '2026-09-24' },
+      }),
     );
-    expect(schedule.days[0].newMemorization).toEqual({ from: { surah: 114, ayah: 1 }, to: { surah: 114, ayah: 6 } });
-    expect(schedule.days[0].pointerAfter).toEqual({ surah: 114, ayah: 6 });
-    expect(schedule.days[0].completedSurahs).toEqual([114]);
-    expect(schedule.days[1].newMemorization).toEqual({ from: { surah: 113, ayah: 1 }, to: { surah: 113, ayah: 5 } });
-    expect(schedule.days[1].completedSurahs).toEqual([113, 114]);
+
+    // 1. ص 604: الإخلاص + الفلق + الناس
+    expect(schedule.days[0].newMemorization).toEqual({ from: { surah: 112, ayah: 1 }, to: { surah: 114, ayah: 6 } });
+    expect(schedule.days[0].completedSurahs).toEqual([112, 113, 114]);
+
+    // 2. ص 603: الكافرون + النصر + المسد
+    expect(schedule.days[1].newMemorization).toEqual({ from: { surah: 109, ayah: 1 }, to: { surah: 111, ayah: 5 } });
+    expect(schedule.days[1].completedSurahs).toContain(109);
+
+    // 3. ص 602: قريش + الماعون + الكوثر
+    expect(schedule.days[2].newMemorization).toEqual({ from: { surah: 106, ayah: 1 }, to: { surah: 108, ayah: 3 } });
+
+    // 4. ص 601: العصر + الهمزة + الفيل
+    expect(schedule.days[3].newMemorization).toEqual({ from: { surah: 103, ayah: 1 }, to: { surah: 105, ayah: 5 } });
+
+    // 5. ص 600: القارعة + التكاثر
+    expect(schedule.days[4].newMemorization).toEqual({ from: { surah: 101, ayah: 1 }, to: { surah: 102, ayah: 8 } });
+
+    // 6. ص 599: الزلزلة + العاديات كاملة دون اقتصاص
+    expect(schedule.days[5].newMemorization).toEqual({ from: { surah: 99, ayah: 1 }, to: { surah: 100, ayah: 11 } });
+
+    // 7. ص 598: القدر + البينة كاملة دون اقتصاص
+    expect(schedule.days[6].newMemorization).toEqual({ from: { surah: 97, ayah: 1 }, to: { surah: 98, ayah: 8 } });
+
+    // 8. ص 597: التين + العلق كاملة دون اقتصاص
+    expect(schedule.days[7].newMemorization).toEqual({ from: { surah: 95, ayah: 1 }, to: { surah: 96, ayah: 19 } });
+
+    // 9. ص 596: الضحى + الشرح كاملة دون اقتصاص
+    expect(schedule.days[8].newMemorization).toEqual({ from: { surah: 93, ayah: 1 }, to: { surah: 94, ayah: 8 } });
+
+    // 10. ص 595: الشمس + الليل كاملة دون اقتصاص
+    expect(schedule.days[9].newMemorization).toEqual({ from: { surah: 91, ayah: 1 }, to: { surah: 92, ayah: 21 } });
+
+    // 11. ص 594: البلد كاملة
+    expect(schedule.days[10].newMemorization).toEqual({ from: { surah: 90, ayah: 1 }, to: { surah: 90, ayah: 20 } });
+
+    // 12. ص 593: الفجر كاملة
+    expect(schedule.days[11].newMemorization).toEqual({ from: { surah: 89, ayah: 1 }, to: { surah: 89, ayah: 30 } });
+
+    // 13. الغاشية كاملة لوحدها
+    expect(schedule.days[12].newMemorization).toEqual({ from: { surah: 88, ayah: 1 }, to: { surah: 88, ayah: 26 } });
+
+    // 14. الطارق + الأعلى كاملتين معاً
+    expect(schedule.days[13].newMemorization).toEqual({ from: { surah: 86, ayah: 1 }, to: { surah: 87, ayah: 19 } });
+
+    // 15. ص 590: البروج كاملة
+    expect(schedule.days[14].newMemorization).toEqual({ from: { surah: 85, ayah: 1 }, to: { surah: 85, ayah: 22 } });
+
+    // 16. ص 589: الإنشقاق كاملة
+    expect(schedule.days[15].newMemorization).toEqual({ from: { surah: 84, ayah: 1 }, to: { surah: 84, ayah: 25 } });
+
+    // 17. ص 588: المطففين كاملة
+    expect(schedule.days[16].newMemorization).toEqual({ from: { surah: 83, ayah: 1 }, to: { surah: 83, ayah: 36 } });
+
+    // 18. ص 587: الإنفطار كاملة
+    expect(schedule.days[17].newMemorization).toEqual({ from: { surah: 82, ayah: 1 }, to: { surah: 82, ayah: 19 } });
+
+    // 19. ص 586: التكوير كاملة
+    expect(schedule.days[18].newMemorization).toEqual({ from: { surah: 81, ayah: 1 }, to: { surah: 81, ayah: 29 } });
+
+    // 20. ص 585: عبس كاملة
+    expect(schedule.days[19].newMemorization).toEqual({ from: { surah: 80, ayah: 1 }, to: { surah: 80, ayah: 42 } });
+
+    // 21. النازعات (ص 583 / الوجه الأول)
+    expect(schedule.days[20].newMemorization).toEqual({ from: { surah: 79, ayah: 1 }, to: { surah: 79, ayah: 16 } });
+
+    // 22. النازعات (ص 584 / الوجه الثاني)
+    expect(schedule.days[21].newMemorization).toEqual({ from: { surah: 79, ayah: 17 }, to: { surah: 79, ayah: 46 } });
+    expect(schedule.days[21].completedSurahs).toContain(79);
+
+    // 23. النبإ (ص 582 / القسم الأول)
+    expect(schedule.days[22].newMemorization).toEqual({ from: { surah: 78, ayah: 1 }, to: { surah: 78, ayah: 30 } });
+
+    // 24. النبإ (ص 583 / القسم الثاني)
+    expect(schedule.days[23].newMemorization).toEqual({ from: { surah: 78, ayah: 31 }, to: { surah: 78, ayah: 40 } });
+    expect(schedule.days[23].completedSurahs).toContain(78);
   });
 
-  it('reverse ayahs rate walks forward within the surah without reversing ayahs', () => {
+  it('reverse ayahs rate walks forward within the surah from beginning without reversing ayahs', () => {
     const schedule = buildMemorizationSchedule(
-      closedConfig({ direction: 'reverse', startRef: { surah: 114, ayah: 1 }, rate: { type: 'ayahs', count: 4 } }),
+      closedConfig({
+        direction: 'reverse',
+        startRef: { surah: 114, ayah: 6 },
+        rate: { type: 'ayahs', count: 4 },
+        weeklyPattern: ['study', 'study', 'study', 'rest', 'rest', 'rest', 'rest'],
+      }),
     );
     expect(schedule.days[0].newMemorization).toEqual({ from: { surah: 114, ayah: 1 }, to: { surah: 114, ayah: 4 } });
     expect(schedule.days[0].completedSurahs).toEqual([]);
     expect(schedule.days[1].newMemorization).toEqual({ from: { surah: 114, ayah: 5 }, to: { surah: 114, ayah: 6 } });
     expect(schedule.days[1].completedSurahs).toEqual([114]);
+    expect(schedule.days[2].newMemorization).toEqual({ from: { surah: 113, ayah: 1 }, to: { surah: 113, ayah: 4 } });
   });
 
-  it('reverse stops at the end of Al-Fatihah without fake ayahs', () => {
+  it('reverse stops at the beginning of Al-Fatihah without fake ayahs', () => {
     const schedule = buildMemorizationSchedule(
-      closedConfig({ direction: 'reverse', startRef: { surah: 1, ayah: 7 }, rate: { type: 'ayahs', count: 5 } }),
+      closedConfig({ direction: 'reverse', startRef: { surah: 1, ayah: 7 }, rate: { type: 'ayahs', count: 7 } }),
     );
-    expect(schedule.days[0].newMemorization).toEqual({ from: { surah: 1, ayah: 7 }, to: { surah: 1, ayah: 7 } });
+    expect(schedule.days[0].newMemorization).toEqual({ from: { surah: 1, ayah: 1 }, to: { surah: 1, ayah: 7 } });
     expect(schedule.days[0].completedSurahs).toEqual([1]);
     expect(schedule.days[1].newMemorization).toBeNull();
     expect(schedule.issues).toHaveLength(1);
-    expect(schedule.endRef).toEqual({ surah: 1, ayah: 7 });
+    expect(schedule.endRef).toEqual({ surah: 1, ayah: 1 });
   });
 
   it('tathbeet and companion days carry no new memorization', () => {
@@ -162,13 +245,33 @@ describe('memorization layer (scratch)', () => {
     expect(schedule.days[1].newMemorization).toEqual({ from: { surah: 18, ayah: 16 }, to: { surah: 18, ayah: 20 } });
   });
 
-  it('reverse half-page: Maryam tail merges into two faces, then Al-Kahf head starts its region', () => {
+  it('reverse full-page: continues seamlessly from Juz Amma into Al-Mursalat with forward ayahs', () => {
     const schedule = buildMemorizationSchedule(
-      closedConfig({ direction: 'reverse', startRef: { surah: 19, ayah: 77 }, weeklyPattern: new Array(7).fill('study') }),
+      closedConfig({
+        direction: 'reverse',
+        startRef: { surah: 114, ayah: 6 },
+        rate: { type: 'full-page' },
+        weeklyPattern: new Array(28).fill('study'),
+        dates: { start: '2026-09-01', end: '2026-09-28' },
+      }),
     );
-    expect(schedule.days[0].newMemorization).toEqual({ from: { surah: 19, ayah: 77 }, to: { surah: 19, ayah: 87 } });
-    expect(schedule.days[1].newMemorization).toEqual({ from: { surah: 19, ayah: 88 }, to: { surah: 19, ayah: 98 } });
-    expect(schedule.days[1].completedSurahs).toContain(19);
-    expect(schedule.days[2].newMemorization).toEqual({ from: { surah: 18, ayah: 1 }, to: { surah: 18, ayah: 9 } });
+
+    // Day 21: An-Nazi'at face 1 (ص 583)
+    expect(schedule.days[20].newMemorization).toEqual({ from: { surah: 79, ayah: 1 }, to: { surah: 79, ayah: 16 } });
+    // Day 22: An-Nazi'at face 2 (ص 584)
+    expect(schedule.days[21].newMemorization).toEqual({ from: { surah: 79, ayah: 17 }, to: { surah: 79, ayah: 46 } });
+    expect(schedule.days[21].completedSurahs).toContain(79);
+
+    // Day 23: An-Naba' face 1 (ص 582)
+    expect(schedule.days[22].newMemorization).toEqual({ from: { surah: 78, ayah: 1 }, to: { surah: 78, ayah: 30 } });
+    // Day 24: An-Naba' face 2 (ص 583)
+    expect(schedule.days[23].newMemorization).toEqual({ from: { surah: 78, ayah: 31 }, to: { surah: 78, ayah: 40 } });
+    expect(schedule.days[23].completedSurahs).toContain(78);
+
+    // Day 25: Al-Mursalat part 1 (head of surah: 77:1..77:19)
+    expect(schedule.days[24].newMemorization).toEqual({ from: { surah: 77, ayah: 1 }, to: { surah: 77, ayah: 19 } });
+    // Day 26: Al-Mursalat part 2 (tail of surah: 77:20..77:50)
+    expect(schedule.days[25].newMemorization).toEqual({ from: { surah: 77, ayah: 20 }, to: { surah: 77, ayah: 50 } });
+    expect(schedule.days[25].completedSurahs).toContain(77);
   });
 });

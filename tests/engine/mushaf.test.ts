@@ -183,7 +183,7 @@ describe('mushaf layer (scratch)', () => {
     });
 
     it('whole surahs: startOfFace returns the first ayah', () => {
-      const wholeSurahs = [86, 91, 93, 94, 95, 97, 100, 101, 104, 107, 113, 114];
+      const wholeSurahs = [82, 86, 87, 91, 93, 94, 95, 97, 100, 101, 104, 107, 110, 113, 114];
       for (const surah of wholeSurahs) {
         const first = { surah, ayah: 1 };
         expect(startOfFace(first)).toEqual({ surah, ayah: 1 });
@@ -191,7 +191,7 @@ describe('mushaf layer (scratch)', () => {
     });
 
     it('half surahs are split into exactly 2 parts', () => {
-      const halfSurahs = [80, 82, 84, 85, 87, 88, 90, 92, 96, 98];
+      const halfSurahs = [80, 84, 85, 88, 89, 90, 92, 96, 98];
       for (const surah of halfSurahs) {
         expect(SPLIT_POLICY[surah]).toBe('half');
         const first = { surah, ayah: 1 };
@@ -209,7 +209,7 @@ describe('mushaf layer (scratch)', () => {
     });
 
     it('half surahs: startOfFace returns first ayah in first half, mid+1 in second', () => {
-      const halfSurahs = [80, 82, 84, 85, 87, 88, 90, 92, 96, 98];
+      const halfSurahs = [80, 84, 85, 88, 89, 90, 92, 96, 98];
       for (const surah of halfSurahs) {
         const first = { surah, ayah: 1 };
         const mid = endOfFace(first);
@@ -218,6 +218,21 @@ describe('mushaf layer (scratch)', () => {
         const expected = { surah, ayah: mid.ayah + 1 };
         expect(startOfFace(secondHalfStart)).toEqual(expected);
       }
+    });
+
+    it('Al-Fajr (89) is split into exactly 2 parts: 1..15 and 16..30', () => {
+      expect(SPLIT_POLICY[89]).toBe('half');
+      expect(endOfFace({ surah: 89, ayah: 1 })).toEqual({ surah: 89, ayah: 15 });
+      expect(startOfFace({ surah: 89, ayah: 1 })).toEqual({ surah: 89, ayah: 1 });
+      expect(endOfFace({ surah: 89, ayah: 16 })).toEqual({ surah: 89, ayah: 30 });
+      expect(startOfFace({ surah: 89, ayah: 16 })).toEqual({ surah: 89, ayah: 16 });
+    });
+
+    it('Al-Ala (87) and Al-Infitar (82) are whole surahs without split', () => {
+      expect(SPLIT_POLICY[87]).toBe('whole');
+      expect(endOfFace({ surah: 87, ayah: 1 })).toEqual({ surah: 87, ayah: 19 });
+      expect(SPLIT_POLICY[82]).toBe('whole');
+      expect(endOfFace({ surah: 82, ayah: 1 })).toEqual({ surah: 82, ayah: 19 });
     });
 
     it('Al-Mutaffifin (83) is split into exactly 3 parts', () => {

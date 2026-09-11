@@ -93,7 +93,7 @@ describe('merge layer (scratch)', () => {
       dates: { start: '2026-09-01', end: '2026-12-31' },
     });
     const plan = computePlan(config);
-    expect(plan.endRef).toEqual({ surah: 1, ayah: 7 });
+    expect(plan.endRef).toEqual({ surah: 1, ayah: 1 });
     for (const day of plan.days) {
       for (const range of allRefs(day)) {
         expect(refExists(range.from)).toBe(true);

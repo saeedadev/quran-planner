@@ -213,12 +213,12 @@ function ayahLinesOfPage(page: number): readonly AyahLineEntry[] {
   return lines;
 }
 
-function firstRefOfPage(page: number): AyahRef {
+export function firstRefOfPage(page: number): AyahRef {
   const lines = ayahLinesOfPage(page);
   return lines[0].first;
 }
 
-function lastRefOfPage(page: number): AyahRef {
+export function lastRefOfPage(page: number): AyahRef {
   const lines = ayahLinesOfPage(page);
   return lines[lines.length - 1].last;
 }
@@ -286,7 +286,7 @@ function refAfterSteps(ref: AyahRef, steps: number): AyahRef {
 // تقسيم الوجه نصفين يعتمد على المنتصف البصري للصفحة (الأسطر لا عدد الآيات):
 // النصف الأول = أول floor(N/2) من أسطر الآيات، والنصف الثاني = الباقي،
 // والخط الأوسط يُحتسب في النصف الثاني (مثل صفحة البقرة 6–16: النصف الأول 6–11 ثم 12–16).
-function firstFaceEndOfPage(page: number): AyahRef {
+export function firstFaceEndOfPage(page: number): AyahRef {
   const lines = ayahLinesOfPage(page);
   const split = Math.floor(lines.length / 2);
   if (split < 1) {
@@ -297,7 +297,7 @@ function firstFaceEndOfPage(page: number): AyahRef {
 
 // بداية النصف الثاني = ما بعد آخر آية في النصف الأول (وليس أول آية في السطر الأوسط):
 // السطر الأوسط قد يبدأ بآية تسبق نهاية النصف الأول (مثل صفحة المطففين التي يبدأ سطرها الأوسط بـ83:19–21).
-function secondFaceStartOfPage(page: number): AyahRef {
+export function secondFaceStartOfPage(page: number): AyahRef {
   const firstEnd = firstFaceEndOfPage(page);
   return nextRef(firstEnd) ?? firstEnd;
 }
@@ -467,7 +467,9 @@ type SplitPolicy = 'whole' | 'half' | 'thirds' | 'quarters';
 
 export const SPLIT_POLICY: Readonly<Record<number, SplitPolicy>> = {
   // لا تقسيم — سورة كاملة كوجه واحد
+  82: 'whole',  // الانفطار
   86: 'whole',  // الطارق
+  87: 'whole',  // الأعلى
   91: 'whole',  // الشمس
   93: 'whole',  // الضحى
   94: 'whole',  // الشرح
@@ -482,11 +484,10 @@ export const SPLIT_POLICY: Readonly<Record<number, SplitPolicy>> = {
   114: 'whole', // الناس
   // قسمان فقط
   80: 'half',   // عبس
-  82: 'half',   // الانفطار
   84: 'half',   // الانشقاق
   85: 'half',   // البروج
-  87: 'half',   // الأعلى
   88: 'half',   // الغاشية
+  89: 'half',   // الفجر (قسمان: 1..15 ثم 16..30)
   90: 'half',   // البلد
   92: 'half',   // الليل
   96: 'half',   // العلق
